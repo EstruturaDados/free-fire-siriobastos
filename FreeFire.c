@@ -469,3 +469,218 @@ int main() {
     printf("\nEncerrando sistema...\n");
     return 0;
 }
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
+
+#define MAX 20
+
+// ============================================================
+// ======================= STRUCT =============================
+// ============================================================
+typedef struct {
+    char nome[30];
+    char tipo[20];
+    int prioridade;
+} Componente;
+
+// ============================================================
+// ================= CONTADORES GLOBAIS ========================
+// ============================================================
+long long comparacoes;
+
+// ============================================================
+// ========== FUNÇÃO GENÉRICA DE MEDIÇÃO DE TEMPO =============
+// ============================================================
+double medirTempo(void (*algoritmo)(Componente[], int), Componente vet[], int n) {
+    clock_t inicio, fim;
+    inicio = clock();
+    algoritmo(vet, n);
+    fim = clock();
+
+    return (double)(fim - inicio) / CLOCKS_PER_SEC;
+}
+
+// ============================================================
+// ==================== BUBBLE SORT (NOME) ====================
+// ============================================================
+void bubbleSortNome(Componente vet[], int n) {
+    comparacoes = 0;
+    for (int i = 0; i < n - 1; i++) {
+        for (int j = 0; j < n - 1 - i; j++) {
+            comparacoes++;
+            if (strcmp(vet[j].nome, vet[j + 1].nome) > 0) {
+                Componente temp = vet[j];
+                vet[j] = vet[j + 1];
+                vet[j + 1] = temp;
+            }
+        }
+    }
+}
+
+// ============================================================
+// ================ INSERTION SORT (TIPO) ======================
+// ============================================================
+void insertionSortTipo(Componente vet[], int n) {
+    comparacoes = 0;
+    for (int i = 1; i < n; i++) {
+        Componente atual = vet[i];
+        int j = i - 1;
+
+        while (j >= 0) {
+            comparacoes++;
+            if (strcmp(vet[j].tipo, atual.tipo) > 0) {
+                vet[j + 1] = vet[j];
+                j--;
+            } else break;
+        }
+        vet[j + 1] = atual;
+    }
+}
+
+// ============================================================
+// ============== SELECTION SORT (PRIORIDADE) =================
+// ============================================================
+void selectionSortPrioridade(Componente vet[], int n) {
+    comparacoes = 0;
+    for (int i = 0; i < n - 1; i++) {
+        int menor = i;
+
+        for (int j = i + 1; j < n; j++) {
+            comparacoes++;
+            if (vet[j].prioridade < vet[menor].prioridade) {
+                menor = j;
+            }
+        }
+
+        // troca
+        if (menor != i) {
+            Componente temp = vet[i];
+            vet[i] = vet[menor];
+            vet[menor] = temp;
+        }
+    }
+}
+
+// ============================================================
+// ======================= BUSCA BINÁRIA ======================
+// ============================================================
+int buscaBinariaPorNome(Componente vet[], int n, char nome[]) {
+    int ini = 0, fim = n - 1, meio;
+
+    while (ini <= fim) {
+        meio = (ini + fim) / 2;
+
+        int cmp = strcmp(nome, vet[meio].nome);
+
+        if (cmp == 0)
+            return meio;
+        else if (cmp > 0)
+            ini = meio + 1;
+        else
+            fim = meio - 1;
+    }
+    return -1;
+}
+
+// ============================================================
+// ======================= EXIBIÇÃO ===========================
+// ============================================================
+void mostrarComponentes(Componente vet[], int n) {
+    printf("\n===== COMPONENTES ATUAIS =====\n");
+    for (int i = 0; i < n; i++) {
+        printf("\nComponente %d:\n", i + 1);
+        printf("Nome: %s\n", vet[i].nome);
+        printf("Tipo: %s\n", vet[i].tipo);
+        printf("Prioridade: %d\n", vet[i].prioridade);
+    }
+}
+
+// ============================================================
+// ========================== MAIN ============================
+// ============================================================
+int main() {
+    Componente componentes[MAX];
+    int total = 0;
+    int opcao;
+
+    do {
+        printf("\n==============================\n");
+        printf("   SISTEMA DA TORRE DE FUGA   \n");
+        printf("==============================");
+        printf("\n1 - Cadastrar componente");
+        printf("\n2 - Ordenar por NOME (Bubble Sort)");
+        printf("\n3 - Ordenar por TIPO (Insertion Sort)");
+        printf("\n4 - Ordenar por PRIORIDADE (Selection Sort)");
+        printf("\n5 - Busca Binária por Nome");
+        printf("\n6 - Mostrar componentes");
+        printf("\n0 - Sair");
+        printf("\nEscolha: ");
+        scanf("%d", &opcao);
+        getchar(); // remover o \n
+
+        if (opcao == 1) {
+            if (total >= MAX) {
+                printf("Limite máximo de componentes atingido!\n");
+                continue;
+            }
+            printf("\nNome do componente: ");
+            fgets(componentes[total].nome, 30, stdin);
+            componentes[total].nome[strcspn(componentes[total].nome, "\n")] = '\0';
+
+            printf("Tipo: ");
+            fgets(componentes[total].tipo, 20, stdin);
+            componentes[total].tipo[strcspn(componentes[total].tipo, "\n")] = '\0';
+
+            printf("Prioridade (1 a 10): ");
+            scanf("%d", &componentes[total].prioridade);
+            getchar();
+
+            total++;
+            printf("Componente cadastrado!\n");
+        }
+        else if (opcao == 2) {
+            double tempo = medirTempo(bubbleSortNome, componentes, total);
+            printf("\nOrdenado por NOME!\nComparações: %lld\nTempo: %.6f s\n", comparacoes, tempo);
+        }
+        else if (opcao == 3) {
+            double tempo = medirTempo(insertionSortTipo, componentes, total);
+            printf("\nOrdenado por TIPO!\nComparações: %lld\nTempo: %.6f s\n", comparacoes, tempo);
+        }
+        else if (opcao == 4) {
+            double tempo = medirTempo(selectionSortPrioridade, componentes, total);
+            printf("\nOrdenado por PRIORIDADE!\nComparações: %lld\nTempo: %.6f s\n", comparacoes, tempo);
+        }
+        else if (opcao == 5) {
+            if (total == 0) {
+                printf("\nNenhum componente disponível.\n");
+                continue;
+            }
+
+            char chave[30];
+            printf("\nDigite o nome do componente-chave: ");
+            fgets(chave, 30, stdin);
+            chave[strcspn(chave, "\n")] = '\0';
+
+            int pos = buscaBinariaPorNome(componentes, total, chave);
+
+            if (pos >= 0) {
+                printf("\n*** COMPONENTE ENCONTRADO! ***\n");
+                printf("Nome: %s | Tipo: %s | Prioridade: %d\n",
+                       componentes[pos].nome, componentes[pos].tipo, componentes[pos].prioridade);
+                printf("A montagem da torre pode prosseguir!\n");
+            } else {
+                printf("\nComponente não encontrado. A torre não pode ser ativada!\n");
+            }
+        }
+        else if (opcao == 6) {
+            mostrarComponentes(componentes, total);
+        }
+
+    } while (opcao != 0);
+
+    printf("\nSaindo do sistema...\n");
+    return 0;
+}
